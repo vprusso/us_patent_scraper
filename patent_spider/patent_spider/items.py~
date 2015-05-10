@@ -1,0 +1,40 @@
+# -*- coding: utf-8 -*-
+"""Item fields for the Scrapy patent crawler"""
+
+from scrapy.contrib.djangoitem import DjangoItem
+from scrapy.item import Field
+
+from patent_app.models import Person
+
+import scrapy
+
+class PersonItem(DjangoItem):
+    # fields for this item are automatically created from the django model
+    django_model = Person
+
+class PatentSpiderItem(scrapy.Item):
+    
+    # Basic information
+    title = scrapy.Field()
+    patent_num = scrapy.Field()
+    inventors = scrapy.Field()
+    abstract = scrapy.Field()
+
+    # Inventors / etc.    
+    assignee = scrapy.Field()
+    family_id = scrapy.Field()
+    appl_no = scrapy.Field()    
+    filed_date = scrapy.Field()
+
+    pct_filed_date = scrapy.Field()
+    pct_num = scrapy.Field()
+    pct_pub_num = scrapy.Field()
+    pct_pub_date = scrapy.Field()
+    
+    # Prior publication date
+    document_identifier = scrapy.Field()
+    publication_date = scrapy.Field()    
+    
+    session_id = scrapy.Field()
+    current_url = scrapy.Field()
+    referring_url = scrapy.Field()
