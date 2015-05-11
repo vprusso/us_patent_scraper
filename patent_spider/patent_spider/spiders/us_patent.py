@@ -19,7 +19,7 @@ class USPatent(CrawlSpider):
     
     # all search terms for us patent search are saved in .txt file.
     #f = open("us_patent_urls.txt")
-    f = open("us_patent_urls.txt")
+    f = open("test.txt")
     start_urls = [url.strip() for url in f.readlines()]
     f.close()
     
@@ -56,13 +56,7 @@ class USPatent(CrawlSpider):
         
         nullstring = '-----'        #setting a dummy string for filler
         ccnullstring = '--'        
-        
-        month_list = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', \
-                       'SEP', 'OCT', 'NOV', 'DEC', \
-                       'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE', \
-                       'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', \
-                       'DECEMBER']
-                   
+                           
         tabletags_list = []         #initializing lists
         fonttags_list = []
         titletags_list = []
@@ -120,15 +114,13 @@ class USPatent(CrawlSpider):
             
             international_classes = self.ClassList( intclass_str )      
             
-            ############################################
-            #Finding the inventors - in 3rd table
-            
+            # Finding the inventors - in 3rd table            
             inv_lastname_list = []          #initialize lists
             inv_firstname_list = []
             inv_country_list = []
            
-            #the following code should be a method, because i use it again for the assignee (to do later)
-            
+            # The following code should be a method, because i use it again for 
+            # the assignee (to do later)            
             listlength = tabletags_list.__len__()
             i=0
             mark_position = 0
@@ -140,68 +132,54 @@ class USPatent(CrawlSpider):
                 inventor = re.findall(inventor_expression,tabletags_string)
                 
                 if not inventor:                    
-                    i = i + 1       #keep checking...
-                else:       #found an inventor 
+                    i = i + 1       # keep checking...
+                else:               # found an inventor 
                     mark_position = i
-                    i = listlength   #exit the while loop
+                    i = listlength   # exit the while loop
 
                     
             if mark_position == 0:
                 inventor_str = nullstring
-                print "did not find inventor"
             else:   
                 inventor_str = "found inventor in table tag" + str(mark_position)
-                print inventor_str
             
             inventor_info   = tabletags_list[mark_position].extract()
-            #print "the extracted inventor information is"
-            #print inventor_info
-            
-            print " first grab all the b-tags --should grab at least the inventor info, usually more"
+                        
             inventor_name_expression = re.compile('<b>(.*?)</b>')
             inventor_list = re.findall(inventor_name_expression,str(inventor_info))
-            listlength = inventor_list.__len__()
-            print "inventor  list is"
-            print inventor_list                
+            listlength = inventor_list.__len__()         
                 
-            for i in range(0, listlength):  #look for names
+            for i in range(0, listlength):  # look for names
                 fullname = "".join(inventor_list[i])
-                flag = 0  #setting a flag so that a country check is done if a name is found
-                #Check if the full name is there by looking for a semi-colon
-           
+                # Flag so that a country check is done if a name is found
+                flag = 0  
+                
+                # Check if the full name is there by looking for a semi-colon           
                 if fullname.find(';') >=0:
-                    #flag = 1  # found a name, set this flag to do a countyr check
                     name_list = []        
                     name_list = self.ExtractName( "".join(inventor_list[i]) )
                     
                     inv_firstname_list.append("".join(name_list[0]))
                     inv_lastname_list.append("".join(name_list[1]))
                     
-                #if flag == 1:
                 
                 if i+1 < listlength:
                         country = inventor_list[i+1]
-                        if len(country) == 2:  #probably a country for the inventor
-                            print "got country for inventor"
+                        # probably a country for the inventor
+                        if len(country) == 2:  
                             inv_country_list.append(country)
                         else:   
-                            print "did not find country for inventor"
                             inv_country_list.append(ccnullstring)
                     
                 else:
-                    print ""  #do nothing               
-        
-        
-            for i in range(listlength, MAX_INVENTOR):    #pad the rest of the inventors
+                    pass
+                
+            # Pad  remaining inventors
+            for i in range(listlength, MAX_INVENTOR):    
                 inv_firstname_list.append("")
                 inv_lastname_list.append ("")        
                 inv_country_list.append("")
-               
-            for i in range(0, inv_lastname_list.__len__()):
-                    #print inv_lastname_list[i], ", ", inv_firstname_list[i], " (", inv_city_list[i], ", ", inv_country_list[i], ")"
-                print inv_lastname_list[i], ", ", inv_firstname_list[i], ", ", inv_country_list[i]
-                print ""
-            
+                           
             ## DOCUMENT IDENTIFIER:
             # Depending on site, document identifier may be in a different table.
             doc_id = (sel.xpath('/html/body/table[4]/tr/td[2]/text()').extract()[0]).strip()
@@ -221,14 +199,12 @@ class USPatent(CrawlSpider):
             # Check to ensure that the publication date involves a month.
             if any(month.lower() in str(pub_id).lower() for month in month_list):            
                 item['publication_date'] = pub_id
-            
-            
+                        
             # STORE INTO DICTIONARY:
             item['patent_name'] = (re.sub("\s\s+" , " ", str(sel.xpath('/html/body/font/text()').extract()[0]).replace("\\n",""))).strip()        
             item['patent_num'] = (sel.xpath('(/html/body/table[2]/tr/td/b/text())[2]').extract()[0]).strip()                        
-            #item['abstract'] = (re.sub("\s\s+" , " ", str(sel.xpath('/html/body/p[1]/text()').extract()[0]).replace("\\n",""))).strip()
-            item['abstract'] = 'dummy_abstract'
-            
+            item['abstract'] = (re.sub("\s\s+" , " ", str(sel.xpath('/html/body/p[1]/text()').extract()[0]).replace("\\n",""))).strip()
+                        
             item['granted_date'] = granted_date
             item['filed_date'] = filed_date
             item['us_classes'] = us_classes
@@ -237,14 +213,12 @@ class USPatent(CrawlSpider):
             item['inventor_first_name'] = inv_firstname_list            
             item['inventor_last_name'] = inv_lastname_list
             item['inventor_country_code'] = inv_country_list
-            
-            #item['inventors'] = inventor_list
-            
+                        
             items.append(item)
             
         return items
         
-    #Extract the classes that are separated by ;
+    # Extract the classes that are separated by ;
     def ClassList (self, text ):
             class_list = []
             
@@ -263,7 +237,7 @@ class USPatent(CrawlSpider):
             return class_list
         
     def ExtractName(self, text ):
-            #Trim non-characters and spaces
+            # Trim non-characters and spaces
             char="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
             length = len(text)
             start_pos = -1
@@ -290,23 +264,23 @@ class USPatent(CrawlSpider):
             name_list.append(firstName)
             name_list.append(lastName)
             return name_list
-    
-    #Extract the inventor's city, assuming text="(city, country)"
+     
+    # Extract the inventor's city, assuming text="(city, country)"
     def ExtractInvCity(self, text ):
-        #Trim non-characters and spaces
+        # Trim non-characters and spaces
         city_list = []
         
         start_pos = -1
         end_pos   = -1
         loc = 0
         while (True):
-            #Find "(" and "," grab the city then find ")" to grab the country
+            # Find "(" and "," grab the city then find ")" to grab the country
             start_pos = text.find("(", loc)
             
-            #Find the comma closest to the ")"
+            # Find the comma closest to the ")"
             rbraket_pos = text.find(")", start_pos)
             
-            #If there is a comma, try to find one closest to ")"
+            # If there is a comma, try to find one closest to ")"
             end_pos     = text.rfind(",", start_pos, rbraket_pos)
             if (start_pos >=0 and end_pos >=0):
                 city_list.append(text[start_pos+1:end_pos].strip())
@@ -316,27 +290,27 @@ class USPatent(CrawlSpider):
             loc = end_pos + 1
         return city_list
 
-    #Extract the inventor's country, assuming text="(city, country)"
+    # Extract the inventor's country, assuming text="(city, country)"
     def ExtractInvCountry(self, text ):
-        #Trim non-characters and spaces
+        # Trim non-characters and spaces
         country_list = []
         
         start_pos = -1
         end_pos   = -1
         loc = 0
         while (True):
-            #Find "(" and "," grab the city then find ")" to grab the country
+            # Find "(" and "," grab the city then find ")" to grab the country
             loc = text.find("(", loc)
             if (loc <0) : break
             start_pos = text.find(",", loc)
             
-            #Sometimes there is no city so the comma will not show-up
+            # Sometimes there is no city so the comma will not show-up
             if (start_pos < 0) :
                 start_pos = loc
             
             end_pos   = text.find(")", start_pos)
             
-            #If there is a comma, try to find one closest to ")"
+            # If there is a comma, try to find one closest to ")"
             if (start_pos<>loc):
                 start_pos= text.rfind(",", loc, end_pos)
             
@@ -347,4 +321,3 @@ class USPatent(CrawlSpider):
             
             loc = end_pos + 1
         return country_list        
-    
