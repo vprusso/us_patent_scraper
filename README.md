@@ -28,3 +28,6 @@ To obtain the following list of information from a user-specified search of US p
 	10. Patent Name
 
 The URLs are read from "us_patent_urls.txt" and scrapes each search result. The results of each patent are then collected into a .json file. 
+
+## Instructions:
+Simply run the main.py file in patent_spider/patent_spider/main.py
